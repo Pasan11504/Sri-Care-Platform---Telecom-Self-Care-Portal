@@ -1,0 +1,32 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build
+target/
+build/
+dist/
+*.class
+*.jar
+*.war
+
+# Dependencies
+node_modules/
+/.gradle/
+.gradle/
+
+# Environment
+.env
+.env.local
+*.properties
+!application.properties
+
+# Database
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
