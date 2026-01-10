@@ -17,7 +17,7 @@ services:
     networks:
       - sri-care-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d sri_care"]
       interval: 10s
       timeout: 5s
       retries: 5
