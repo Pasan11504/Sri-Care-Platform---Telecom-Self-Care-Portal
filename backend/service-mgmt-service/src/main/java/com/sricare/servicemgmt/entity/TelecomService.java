@@ -27,6 +27,8 @@ public class TelecomService {
     @Column(columnDefinition = "VARCHAR(20) DEFAULT 'INACTIVE'")
     private String status = "INACTIVE";
 
+    private Double monthlyCharge; // Service cost per month
+
     private LocalDateTime activatedDate;
     private LocalDateTime deactivatedDate;
 }

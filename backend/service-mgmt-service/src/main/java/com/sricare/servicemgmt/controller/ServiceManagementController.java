@@ -2,6 +2,7 @@ package com.sricare.servicemgmt.controller;
 
 import com.sricare.servicemgmt.dto.ActivateServiceRequest;
 import com.sricare.servicemgmt.dto.ServiceResponse;
+import com.sricare.servicemgmt.dto.PredefinedServiceDTO;
 import com.sricare.servicemgmt.service.ServiceManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,19 @@ public class ServiceManagementController {
     @Autowired
     private ServiceManagementService serviceManagementService;
 
+    @GetMapping("/predefined")
+    public ResponseEntity<List<PredefinedServiceDTO>> getPredefinedServices() {
+        return ResponseEntity.ok(serviceManagementService.getPredefinedServices());
+    }
+
     @PostMapping("/activate")
     public ResponseEntity<ServiceResponse> activateService(@RequestBody ActivateServiceRequest request) {
         return ResponseEntity.ok(serviceManagementService.activateService(request));
+    }
+
+    @PutMapping("/{serviceId}/reactivate")
+    public ResponseEntity<ServiceResponse> reactivateService(@PathVariable Long serviceId) {
+        return ResponseEntity.ok(serviceManagementService.reactivateService(serviceId));
     }
 
     @PutMapping("/{serviceId}/deactivate")
