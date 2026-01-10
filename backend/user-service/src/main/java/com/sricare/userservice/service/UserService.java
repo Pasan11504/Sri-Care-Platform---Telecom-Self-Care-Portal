@@ -4,6 +4,8 @@ import com.sricare.userservice.dto.*;
 import com.sricare.userservice.entity.User;
 import com.sricare.userservice.repository.UserRepository;
 import com.sricare.userservice.util.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.util.Optional;
 
 @Service
 public class UserService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -24,11 +27,14 @@ public class UserService {
     private JwtUtil jwtUtil;
 
     public UserResponse register(RegisterRequest request) {
+        // Check if phone number already exists
         if (userRepository.findByPhoneNumber(request.getPhoneNumber()).isPresent()) {
-            throw new RuntimeException("Phone number already exists");
+            throw new IllegalArgumentException("Phone number " + request.getPhoneNumber() + " is already registered. Please use a different phone number.");
         }
+        
+        // Check if email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new IllegalArgumentException("Email " + request.getEmail() + " is already registered. Please use a different email.");
         }
 
         User user = new User();
@@ -49,11 +55,33 @@ public class UserService {
         User user = userRepository.findByPhoneNumber(request.getPhoneNumber())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        // Debug logging with SLF4J
+        logger.info("Login attempt for phone: {}", request.getPhoneNumber());
+        logger.debug("Stored password: {}", user.getPassword());
+        logger.debug("Provided password: {}", request.getPassword());
+        
+        // For development: support both plain passwords and BCrypt hashes
+        boolean passwordMatches = false;
+        
+        // Check if stored password is plain text (for testing)
+        if (user.getPassword().equals(request.getPassword())) {
+            passwordMatches = true;
+            logger.info("Plain text password match for: {}", request.getPhoneNumber());
+        } else if (user.getPassword().startsWith("$2")) {
+            // It's a BCrypt hash
+            passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+            logger.info("BCrypt password match result: {} for: {}", passwordMatches, request.getPhoneNumber());
+        }
+        
+        logger.info("Final password match result: {} for: {}", passwordMatches, request.getPhoneNumber());
+
+        if (!passwordMatches) {
+            logger.warn("Login failed - invalid password for: {}", request.getPhoneNumber());
             throw new RuntimeException("Invalid password");
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getPhoneNumber());
+        logger.info("Login successful for: {} with token", request.getPhoneNumber());
         return new LoginResponse(token, user.getId(), user.getPhoneNumber(), user.getEmail());
     }
 
