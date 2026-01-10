@@ -22,6 +22,11 @@ public class BillingController {
         return ResponseEntity.ok(billingService.createBill(request));
     }
 
+    @PostMapping("/create")
+    public ResponseEntity<BillResponse> createBillAlternative(@RequestBody CreateBillRequest request) {
+        return ResponseEntity.ok(billingService.createBill(request));
+    }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BillResponse>> getUserBills(@PathVariable Long userId) {
         return ResponseEntity.ok(billingService.getBillsByUser(userId));
