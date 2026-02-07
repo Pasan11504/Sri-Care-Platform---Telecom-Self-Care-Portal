@@ -48,6 +48,18 @@ public class ChatController {
         chatMsg.setSenderType(request.getSenderType());
         chatMsg.setCreatedAt(LocalDateTime.now());
         ChatMessage saved = chatRepository.save(chatMsg);
+
+        // Generate auto-response from agent
+        if ("CUSTOMER".equals(request.getSenderType())) {
+            ChatMessage autoResponse = new ChatMessage();
+            autoResponse.setCustomerId(request.getCustomerId());
+            autoResponse.setAgentId(request.getAgentId() != null ? request.getAgentId() : null); // Agent ID can be null
+            autoResponse.setMessage("Thank you for your message. Our support team will respond to you shortly.");
+            autoResponse.setSenderType("AGENT");
+            autoResponse.setCreatedAt(LocalDateTime.now());
+            chatRepository.save(autoResponse);
+        }
+
         return ResponseEntity.ok(saved);
     }
 
