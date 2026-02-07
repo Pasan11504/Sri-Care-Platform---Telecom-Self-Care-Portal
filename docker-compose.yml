@@ -1,0 +1,244 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sri-care-db
+    environment:
+      POSTGRES_DB: sri_care
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - sri-care-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d sri_care"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: sri-care-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - sri-care-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # User Service
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: sri-care-user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sri_care
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sri-care-network
+
+  # Billing Service
+  billing-service:
+    build:
+      context: ./backend/billing-service
+      dockerfile: Dockerfile
+    container_name: sri-care-billing-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sri_care
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sri-care-network
+
+  # Service Management Service
+  service-mgmt-service:
+    build:
+      context: ./backend/service-mgmt-service
+      dockerfile: Dockerfile
+    container_name: sri-care-service-mgmt
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sri_care
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sri-care-network
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./backend/payment-service
+      dockerfile: Dockerfile
+    container_name: sri-care-payment-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sri_care
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SERVER_PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sri-care-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    container_name: sri-care-notification-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sri_care
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SERVER_PORT: 8085
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sri-care-network
+
+  # Chat Service
+  chat-service:
+    build:
+      context: ./backend/chat-service
+      dockerfile: Dockerfile
+    container_name: sri-care-chat-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sri_care
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SERVER_PORT: 8086
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sri-care-network
+
+  # Mock Provisioning System
+  provisioning-mock:
+    build:
+      context: ./backend/provisioning-mock
+      dockerfile: Dockerfile
+    container_name: sri-care-provisioning-mock
+    environment:
+      SERVER_PORT: 8087
+    ports:
+      - "8087:8087"
+    networks:
+      - sri-care-network
+
+  # Mock Payment Gateway
+  payment-gateway-mock:
+    build:
+      context: ./backend/payment-gateway-mock
+      dockerfile: Dockerfile
+    container_name: sri-care-payment-gateway-mock
+    environment:
+      SERVER_PORT: 8088
+    ports:
+      - "8088:8088"
+    networks:
+      - sri-care-network
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sri-care-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - billing-service
+      - service-mgmt-service
+      - payment-service
+      - chat-service
+    networks:
+      - sri-care-network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  sri-care-network:
+    driver: bridge
